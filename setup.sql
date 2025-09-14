@@ -51,6 +51,26 @@ CREATE TABLE Comments(
     FOREIGN KEY (responds_to) REFERENCES Comments(id) ON DELETE SET NULL
 );
 
+-- Contains: event_description, title, start, end, participants(M2M), event_type?
+CREATE TABLE Events()
+
+-- Contains: has_unread
+CREATE TABLE Inbox()
+
+-- Contains: inital_sender, initial_reciever, title, Inbox(M2M? - both/all participants need access)
+CREATE TABLE MessageChain()
+
+-- Contains: message body, sender, reciever, MessageChain(fk), read, timestamp
+CREATE TABLE Messages()
+
+-- Just to add more tables - we add golds and awards! That way we can have all the usual payment/invoice tables
+CREATE TABLE Gold()
+
+-- List of possible awards?
+CREATE TABLE Awards()
+
+CREATE TABLE Invoice()
+
 -- JOIN TABLE SECTION
 
 CREATE TABLE SubMods (
