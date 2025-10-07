@@ -104,6 +104,14 @@ CREATE TABLE Events(
     CHECK (start < end)
 );
 
+CREATE TABLE Event_participations(
+    event_id INT ID NOT NULL,
+    user_id INT ID NOT NULL,
+    PRIMARY KEY(event_id, user_id),
+    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE SET NULL,
+    FOREIGN KEY(event_id) REFERENCES Events(id) ON DELETE CASCADE,
+)
+
 CREATE TABLE Message_chains(
     id INT NOT NULL AUTO_INCREMENT,
     PRIMARY KEY(id)
@@ -258,6 +266,23 @@ BEGIN
     WHERE user_id = OLD.id;
 END//
 
+CREATE TRIGGER enforce_message_participation
+BEFORE INSERT ON Messages
+FOR EACH ROW
+BEGIN
+    -- Check if the sender is part of the message chain
+    IF NOT EXISTS (
+        SELECT 1
+        FROM Message_chain_participants
+        WHERE user_id = NEW.sender_id
+          AND chain_id = NEW.chain_id
+    ) THEN
+        -- Raise an error if the sender is not part of the chain
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'User is not a participant in the message chain.';
+    END IF;
+END//
+
 DELIMITER ;
 
 -- EVENTS
@@ -273,6 +298,7 @@ BEGIN
     );
 END;
 
+
 CREATE EVENT remove_expired_events
 ON SCHEDULE EVERY 1 DAY
 DO
@@ -280,33 +306,61 @@ BEGIN
     DELETE FROM Events WHERE end < NOW();
 END;
 
+
 CREATE EVENT notify_upcoming_events
 ON SCHEDULE EVERY 1 DAY
 DO
 BEGIN
     SET @goddit_user_id = (SELECT id FROM Users WHERE username = 'Goddit');
 
-    -- Create a message thread for each upcoming event within the next day
-    INSERT INTO Message_chains ()
-    SELECT NULL; -- Auto-increment ID for each new thread
+    -- Loop through all upcoming events within the next day
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE event_id INT;
+    DECLARE event_title VARCHAR(255);
 
-    -- Add participants to the message thread
-    INSERT INTO Message_chain_participants (user_id, chain_id, has_read, read_only)
-    SELECT DISTINCT Subscriptions.user_id, LAST_INSERT_ID(), FALSE, FALSE
-    FROM Subscriptions
-    JOIN Events ON Subscriptions.sub_id = Events.organisor_id
-    WHERE Events.start BETWEEN NOW() AND NOW() + INTERVAL 1 DAY;
-
-    -- Send a message in the thread as "Goddit"
-    INSERT INTO Messages (body, sent, sender_id, chain_id)
-    SELECT CONCAT('Reminder: The event "', Events.title, '" is happening soon!'),
-           NOW(),
-           @goddit_user_id,
-           LAST_INSERT_ID()
+    -- Cursor to iterate over upcoming events
+    DECLARE event_cursor CURSOR FOR
+    SELECT id, title
     FROM Events
-    WHERE Events.start BETWEEN NOW() AND NOW() + INTERVAL 1 DAY;
+    WHERE start BETWEEN NOW() AND NOW() + INTERVAL 1 DAY;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    -- Open the cursor
+    OPEN event_cursor;
+
+    event_loop: LOOP
+        -- Fetch the next event
+        FETCH event_cursor INTO event_id, event_title;
+
+        IF done THEN
+            LEAVE event_loop;
+        END IF;
+
+        -- Create a new message chain for the event
+        INSERT INTO Message_chains () VALUES ();
+        SET @chain_id = LAST_INSERT_ID();
+
+        -- Add participants to the message chain
+        INSERT INTO Message_chain_participants (user_id, chain_id, has_read, read_only)
+        SELECT DISTINCT Event_participations.user_id, @chain_id, FALSE, FALSE
+        FROM Event_participations
+        WHERE Event_participations.event_id = event_id;
+
+        -- Send a message in the thread as "Goddit"
+        INSERT INTO Messages (body, sent, sender_id, chain_id)
+        VALUES (
+            CONCAT('Reminder: The event "', event_title, '" is happening soon!'),
+            NOW(),
+            @goddit_user_id,
+            @chain_id
+        );
+    END LOOP;
+
+    -- Close the cursor
+    CLOSE event_cursor;
 END;
-END;
+
 
 CREATE EVENT archive_old_posts
 ON SCHEDULE EVERY 1 WEEK
@@ -315,6 +369,7 @@ BEGIN
     INSERT INTO Archived_Posts SELECT * FROM Posts WHERE created < NOW() - INTERVAL 2 YEAR;
     DELETE FROM Posts WHERE created < NOW() - INTERVAL 2 YEAR;
 END;
+
 
 -- First delete old user activity data, then recalculate the daily activity
 CREATE EVENT delete_expired_user_activity
@@ -337,3 +392,93 @@ BEGIN
     );
 END;
 
+
+-- VIEWS
+
+CREATE VIEW active_sub_goddits AS
+SELECT 
+    id AS sub_id,
+    name AS sub_name,
+    description,
+    daily_users,
+    subscribers,
+    created
+FROM Sub_goddits
+ORDER BY daily_users DESC;
+
+
+CREATE VIEW user_post_activity AS
+SELECT 
+    u.id AS user_id,
+    u.username,
+    COUNT(DISTINCT p.id) AS total_posts,
+    COUNT(DISTINCT c.id) AS total_comments,
+    u.karma
+FROM Users u
+LEFT JOIN Posts p ON u.id = p.user_id
+LEFT JOIN Comments c ON u.id = c.user_id
+GROUP BY u.id, u.username, u.karma
+ORDER BY total_posts DESC, total_comments DESC;
+
+
+CREATE VIEW event_participants AS
+SELECT 
+    e.id AS event_id,
+    e.title AS event_title,
+    e.start AS event_start,
+    e.end AS event_end,
+    u.id AS user_id,
+    u.username AS participant_name
+FROM Events e
+JOIN Event_participations ep ON e.id = ep.event_id
+JOIN Users u ON ep.user_id = u.id
+ORDER BY e.start, e.title;
+
+
+CREATE VIEW post_engagement AS
+SELECT 
+    p.id AS post_id,
+    p.title AS post_title,
+    p.upvotes,
+    p.downvotes,
+    COUNT(c.id) AS total_comments,
+    p.created AS post_created,
+    u.username AS author
+FROM Posts p
+LEFT JOIN Comments c ON p.id = c.post_id
+LEFT JOIN Users u ON p.user_id = u.id
+GROUP BY p.id, p.title, p.upvotes, p.downvotes, p.created, u.username
+ORDER BY p.upvotes DESC, total_comments DESC;
+
+
+CREATE VIEW moderator_activity AS
+SELECT 
+    m.sub_id,
+    sg.name AS sub_name,
+    m.user_id,
+    u.username AS moderator_name,
+    m.role AS moderator_role
+FROM Moderators m
+JOIN Sub_goddits sg ON m.sub_id = sg.id
+JOIN Users u ON m.user_id = u.id
+ORDER BY sg.name, m.role;
+
+
+CREATE VIEW user_event_engagement AS
+SELECT 
+    u.id AS user_id,
+    u.username,
+    COUNT(ep.event_id) AS total_events
+FROM Users u
+LEFT JOIN Event_participations ep ON u.id = ep.user_id
+GROUP BY u.id, u.username
+ORDER BY total_events DESC;
+
+
+CREATE VIEW get_user AS
+SELECT 
+    username,
+    email,
+    role,
+    created
+FROM Users;
