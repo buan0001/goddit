@@ -1,3 +1,5 @@
+USE goddit_db;
+
 INSERT INTO Users (username, email, password, role, created)
 VALUES
 ('Goddit', 'admin@goddit.com', 'securepassword', 'admin', NOW()),
@@ -239,3 +241,117 @@ VALUES
 (19, 9, 'moderator'),
 (20, 10, 'owner'),
 (2, 10, 'moderator');
+
+INSERT INTO Award_types (name)
+VALUES
+('Gold'),
+('Silver'),
+('Bronze'),
+('Platinum'),
+('Diamond'),
+('Ruby'),
+('Emerald'),
+('Sapphire'),
+('Top Contributor'),
+('Helpful'),
+('Funny'),
+('Insightful'),
+('Creative'),
+('Supportive'),
+('Innovative'),
+('Kind'),
+('Generous'),
+('Leader'),
+('Visionary'),
+('Legendary');
+
+INSERT INTO Purchases (amount_paid, gold_recieved, user_id)
+VALUES
+(9.99, 100, 2),
+(19.99, 250, 3),
+(4.99, 50, 4),
+(49.99, 500, 5),
+(99.99, 1000, 6),
+(14.99, 150, 7),
+(29.99, 300, 8),
+(19.99, 250, 9),
+(9.99, 100, 10),
+(49.99, 500, 11),
+(99.99, 1000, 12),
+(4.99, 50, 13),
+(14.99, 150, 14),
+(29.99, 300, 15),
+(19.99, 250, 16),
+(9.99, 100, 17),
+(49.99, 500, 18),
+(99.99, 1000, 19),
+(4.99, 50, 20),
+(14.99, 150, 2);
+
+
+INSERT INTO Archived_Posts (id, title, body, upvotes, downvotes, created, user_id, sub_id)
+VALUES
+(1, 'Best programming languages in 2025', 'What are your thoughts?', 120, 10, NOW() - INTERVAL 365 DAY, 2, 7),
+(2, 'Top 10 video games of the year', 'Here are my picks...', 200, 15, NOW() - INTERVAL 400 DAY, 3, 2),
+(3, 'Fitness tips for beginners', 'Start small and stay consistent.', 80, 5, NOW() - INTERVAL 370 DAY, 4, 4),
+(4, 'Best movies to watch this weekend', 'Check out these recommendations.', 90, 8, NOW() - INTERVAL 380 DAY, 5, 3),
+(5, 'How to cook the perfect steak', 'Follow these steps...', 150, 12, NOW() - INTERVAL 390 DAY, 6, 5),
+(6, 'Top travel destinations for 2024', 'Here are some amazing places...', 180, 20, NOW() - INTERVAL 450 DAY, 7, 6),
+(7, 'Why Python is great for beginners', 'Let me explain...', 250, 18, NOW() - INTERVAL 500 DAY, 8, 7),
+(8, 'Share your favorite songs', 'I love this playlist...', 110, 9, NOW() - INTERVAL 420 DAY, 9, 8),
+(9, 'Photography tips for beginners', 'Start with these basics...', 95, 7, NOW() - INTERVAL 430 DAY, 10, 9),
+(10, 'Best books of the year', 'Here are my top picks...', 70, 6, NOW() - INTERVAL 440 DAY, 11, 10);
+
+
+INSERT INTO Comment_awards (user_id, comment_id, award_id)
+VALUES
+(2, 1, 1), (3, 2, 2), (4, 3, 3), (5, 4, 4), (6, 5, 5),
+(7, 6, 6), (8, 7, 7), (9, 8, 8), (10, 9, 9), (11, 10, 10);
+
+
+INSERT INTO Post_flairs (body, sub_id)
+VALUES
+('Discussion', 1),
+('Question', 2),
+('News', 3),
+('Guide', 4),
+('Opinion', 5),
+('Tutorial', 6),
+('Review', 7),
+('Announcement', 8),
+('Poll', 9),
+('Event', 10);
+
+
+INSERT INTO Post_awards (user_id, post_id, award_id)
+VALUES
+(2, 1, 1), (3, 2, 2), (4, 3, 3), (5, 4, 4), (6, 5, 5),
+(7, 6, 6), (8, 7, 7), (9, 8, 8), (10, 9, 9), (11, 10, 10);
+
+
+INSERT INTO User_activity (user_id, sub_id, time_visited)
+VALUES
+(2, 1, NOW() - INTERVAL 1 HOUR),
+(3, 2, NOW() - INTERVAL 2 HOUR),
+(4, 3, NOW() - INTERVAL 3 HOUR),
+(5, 4, NOW() - INTERVAL 4 HOUR),
+(6, 5, NOW() - INTERVAL 5 HOUR),
+(7, 6, NOW() - INTERVAL 6 HOUR),
+(8, 7, NOW() - INTERVAL 7 HOUR),
+(9, 8, NOW() - INTERVAL 8 HOUR),
+(10, 9, NOW() - INTERVAL 9 HOUR),
+(11, 10, NOW() - INTERVAL 10 HOUR);
+
+
+INSERT INTO User_flairs (body, sub_id)
+VALUES
+('Tech Enthusiast', 1),
+('Gamer', 2),
+('Movie Buff', 3),
+('Fitness Guru', 4),
+('Food Lover', 5),
+('Traveler', 6),
+('Programmer', 7),
+('Music Fan', 8),
+('Photographer', 9),
+('Bookworm', 10);

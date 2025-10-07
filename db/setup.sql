@@ -14,15 +14,6 @@ CREATE TABLE Sub_goddits(
     PRIMARY KEY(id)
 );
 
-CREATE TABLE User_activity(
-    id INT NOT NULL AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    sub_id INT NOT NULL,
-    time_visited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(sub_id) REFERENCES Sub_goddits(id) ON DELETE CASCADE,
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
-    INDEX idx_user_activity_sub_id (sub_id)
-)
 
 CREATE TABLE User_flairs(
     id INT NOT NULL AUTO_INCREMENT,
@@ -55,6 +46,19 @@ CREATE TABLE Users(
     UNIQUE INDEX idx_username (username),
     UNIQUE INDEX idx_email (email)
 );
+
+CREATE TABLE User_activity(
+    id INT NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    sub_id INT NOT NULL,
+    time_visited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(sub_id) REFERENCES Sub_goddits(id) ON DELETE CASCADE,
+    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
+    PRIMARY KEY(id),
+    INDEX idx_user_activity_sub_id (sub_id),
+    INDEX idx_user_activity_user_id (user_id)
+);
+
 
 CREATE TABLE Posts(
     id INT NOT NULL AUTO_INCREMENT,
@@ -95,22 +99,24 @@ CREATE TABLE Comments(
 );
 
 CREATE TABLE Events(
+    id INT NOT NULL AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
     body VARCHAR(1000),
     start DATETIME NOT NULL,
     end DATETIME NOT NULL,
     organisor_id INT,
     FOREIGN KEY(organisor_id) REFERENCES Users(id) ON DELETE SET NULL,
+    PRIMARY KEY(id),
     CHECK (start < end)
 );
 
 CREATE TABLE Event_participations(
-    event_id INT ID NOT NULL,
-    user_id INT ID NOT NULL,
+    event_id INT NOT NULL,
+    user_id INT NOT NULL,
     PRIMARY KEY(event_id, user_id),
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE SET NULL,
-    FOREIGN KEY(event_id) REFERENCES Events(id) ON DELETE CASCADE,
-)
+    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
+    FOREIGN KEY(event_id) REFERENCES Events(id) ON DELETE CASCADE
+);
 
 CREATE TABLE Message_chains(
     id INT NOT NULL AUTO_INCREMENT,
@@ -182,7 +188,7 @@ CREATE TABLE Moderators(
     role ENUM('moderator', 'owner') DEFAULT 'moderator',
     PRIMARY KEY(user_id, sub_id),
     FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
-    FOREIGN KEY(sub_id) REFERENCES Sub_goddits(id) ON DELETE CASCADE,
+    FOREIGN KEY(sub_id) REFERENCES Sub_goddits(id) ON DELETE CASCADE
 );
 
 CREATE TABLE Subscriptions(
@@ -230,6 +236,7 @@ BEGIN
     WHERE id = NEW.sub_id;
 END//
 
+
 CREATE TRIGGER after_unsubscribe
 AFTER DELETE ON Subscriptions
 FOR EACH ROW
@@ -239,12 +246,14 @@ BEGIN
     WHERE id = OLD.sub_id;
 END//
 
+
 CREATE TRIGGER prevent_created_update
 BEFORE UPDATE ON Comments
 FOR EACH ROW
 BEGIN
     SET NEW.created_at = OLD.created_at;
 END//
+
 
 CREATE TRIGGER hide_comments_on_user_disable
 AFTER UPDATE ON Users
@@ -257,6 +266,7 @@ BEGIN
     END IF;
 END//
 
+
 CREATE TRIGGER hide_comments_on_user_delete
 AFTER DELETE ON Users
 FOR EACH ROW
@@ -265,6 +275,7 @@ BEGIN
     SET removed = TRUE
     WHERE user_id = OLD.id;
 END//
+
 
 CREATE TRIGGER enforce_message_participation
 BEFORE INSERT ON Messages
@@ -282,6 +293,98 @@ BEGIN
         SET MESSAGE_TEXT = 'User is not a participant in the message chain.';
     END IF;
 END//
+
+-- Part to ensure archived posts stay unchanged
+
+CREATE TRIGGER prevent_comment_changes_on_archived_post
+BEFORE UPDATE ON Comments
+FOR EACH ROW
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM Archived_Posts
+        WHERE Archived_Posts.id = NEW.post_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot modify comments on an archived post.';
+    END IF;
+END//
+
+
+CREATE TRIGGER prevent_comment_deletion_on_archived_post
+BEFORE DELETE ON Comments
+FOR EACH ROW
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM Archived_Posts
+        WHERE Archived_Posts.id = OLD.post_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot delete comments on an archived post.';
+    END IF;
+END//
+
+
+CREATE TRIGGER prevent_vote_changes_on_archived_post
+BEFORE UPDATE ON Post_votes
+FOR EACH ROW
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM Archived_Posts
+        WHERE Archived_Posts.id = NEW.post_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot modify votes on an archived post.';
+    END IF;
+END//
+
+
+CREATE TRIGGER prevent_vote_deletion_on_archived_post
+BEFORE DELETE ON Post_votes
+FOR EACH ROW
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM Archived_Posts
+        WHERE Archived_Posts.id = OLD.post_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot delete votes on an archived post.';
+    END IF;
+END//
+
+
+CREATE TRIGGER prevent_post_changes_on_archived_post
+BEFORE UPDATE ON Posts
+FOR EACH ROW
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM Archived_Posts
+        WHERE Archived_Posts.id = NEW.id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot modify an archived post.';
+    END IF;
+END//
+
+
+CREATE TRIGGER prevent_post_deletion_on_archived_post
+BEFORE DELETE ON Posts
+FOR EACH ROW
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM Archived_Posts
+        WHERE Archived_Posts.id = OLD.id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot delete an archived post.';
+    END IF;
+END//
+
 
 DELIMITER ;
 
@@ -307,59 +410,59 @@ BEGIN
 END;
 
 
-CREATE EVENT notify_upcoming_events
-ON SCHEDULE EVERY 1 DAY
-DO
-BEGIN
-    SET @goddit_user_id = (SELECT id FROM Users WHERE username = 'Goddit');
+-- CREATE EVENT notify_upcoming_events
+-- ON SCHEDULE EVERY 1 DAY
+-- DO
+-- BEGIN
+--     SET @goddit_user_id = (SELECT id FROM Users WHERE username = 'Goddit');
 
-    -- Loop through all upcoming events within the next day
-    DECLARE done INT DEFAULT FALSE;
-    DECLARE event_id INT;
-    DECLARE event_title VARCHAR(255);
+--     -- Loop through all upcoming events within the next day
+--     DECLARE done INT DEFAULT FALSE;
+--     DECLARE event_id INT;
+--     DECLARE event_title VARCHAR(255);
 
-    -- Cursor to iterate over upcoming events
-    DECLARE event_cursor CURSOR FOR
-    SELECT id, title
-    FROM Events
-    WHERE start BETWEEN NOW() AND NOW() + INTERVAL 1 DAY;
+--     -- Cursor to iterate over upcoming events
+--     DECLARE event_cursor CURSOR FOR
+--     SELECT id, title
+--     FROM Events
+--     WHERE start BETWEEN NOW() AND NOW() + INTERVAL 1 DAY;
 
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+--     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-    -- Open the cursor
-    OPEN event_cursor;
+--     -- Open the cursor
+--     OPEN event_cursor;
 
-    event_loop: LOOP
-        -- Fetch the next event
-        FETCH event_cursor INTO event_id, event_title;
+--     event_loop: LOOP
+--         -- Fetch the next event
+--         FETCH event_cursor INTO event_id, event_title;
 
-        IF done THEN
-            LEAVE event_loop;
-        END IF;
+--         IF done THEN
+--             LEAVE event_loop;
+--         END IF;
 
-        -- Create a new message chain for the event
-        INSERT INTO Message_chains () VALUES ();
-        SET @chain_id = LAST_INSERT_ID();
+--         -- Create a new message chain for the event
+--         INSERT INTO Message_chains () VALUES ();
+--         SET @chain_id = LAST_INSERT_ID();
 
-        -- Add participants to the message chain
-        INSERT INTO Message_chain_participants (user_id, chain_id, has_read, read_only)
-        SELECT DISTINCT Event_participations.user_id, @chain_id, FALSE, FALSE
-        FROM Event_participations
-        WHERE Event_participations.event_id = event_id;
+--         -- Add participants to the message chain
+--         INSERT INTO Message_chain_participants (user_id, chain_id, has_read, read_only)
+--         SELECT DISTINCT Event_participations.user_id, @chain_id, FALSE, FALSE
+--         FROM Event_participations
+--         WHERE Event_participations.event_id = event_id;
 
-        -- Send a message in the thread as "Goddit"
-        INSERT INTO Messages (body, sent, sender_id, chain_id)
-        VALUES (
-            CONCAT('Reminder: The event "', event_title, '" is happening soon!'),
-            NOW(),
-            @goddit_user_id,
-            @chain_id
-        );
-    END LOOP;
+--         -- Send a message in the thread as "Goddit"
+--         INSERT INTO Messages (body, sent, sender_id, chain_id)
+--         VALUES (
+--             CONCAT('Reminder: The event "', event_title, '" is happening soon!'),
+--             NOW(),
+--             @goddit_user_id,
+--             @chain_id
+--         );
+--     END LOOP;
 
-    -- Close the cursor
-    CLOSE event_cursor;
-END;
+--     -- Close the cursor
+--     CLOSE event_cursor;
+-- END;
 
 
 CREATE EVENT archive_old_posts
@@ -373,7 +476,7 @@ END;
 
 -- First delete old user activity data, then recalculate the daily activity
 CREATE EVENT delete_expired_user_activity
-ON SCHEDULE EVERY 30 MINUTE
+ON SCHEDULE EVERY 30 SECOND
 DO
 BEGIN
     DELETE FROM User_activity
@@ -381,7 +484,7 @@ BEGIN
 END;
 
 CREATE EVENT update_daily_visitors
-ON SCHEDULE EVERY 30 MINUTE
+ON SCHEDULE EVERY 30 SECOND
 DO
 BEGIN
     UPDATE Sub_goddits
