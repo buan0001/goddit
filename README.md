@@ -1,4 +1,1 @@
-# Your average Reddit clone implemented in Go
-`Ya' mate, I got it from Goddit`
-
-
+# For database diagrams and report: look in the `docs` folder
