@@ -1,4 +1,4 @@
-package db
+package mongo
 
 import (
 	"context"
@@ -8,24 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
-	"os"
 )
-
-type MongoDatabase struct {
-	Collection *mongo.Collection
-}
-
-func NewMongoDatabase(collection *mongo.Collection) *MongoDatabase {
-	client, err := mongo.Connect(nil, options.Client().ApplyURI(os.Getenv("MONGO_URI")))
-	if err != nil {
-		log.Fatalf("Failed to connect to MongoDB: %v", err)
-	}
-	collection := client.Database("goddit").Collection("users")
-	database = db.NewMongoDatabase(collection)
-
-	return &MongoDatabase{Collection: collection}
-}
 
 func (db *MongoDatabase) GetAllUsers() ([]models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

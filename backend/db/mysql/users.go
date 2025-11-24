@@ -1,34 +1,8 @@
-package db
+package mysql
 
 import (
-	"fmt"
-	"log"
-	"os"
-    "database/sql"
-    "goddit/backend/models"
+	"goddit/backend/models"
 )
-
-type SQLDatabase struct {
-    Conn *sql.DB
-}
-
-func NewSQLDatabase() *Database {
-	dsn := os.Getenv("CONN_STR")
-
-	conn, err := sql.Open("mysql", dsn)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	if err := conn.Ping(); err != nil {
-		log.Fatalf("Failed to ping the database: %v", err)
-	}
-
-	fmt.Println("Database connection established successfully!")
-
-	return &SQLDatabase{Conn: conn}
-}
-
 
 func (db *SQLDatabase) GetAllUsers() ([]models.User, error) {
     rows, err := db.Conn.Query("SELECT id, username, email FROM Users")
