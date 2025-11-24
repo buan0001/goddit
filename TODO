@@ -1,0 +1,23 @@
+Database tilføjelser/overvejelser:
+Helt generelle:
+- Skift fra Go til... JS/python? -> Forbliver med Go
+- Native queries eller libs? -> Native queries (better db understanding)
+
+Mere specifikke:
+- Settings på en sub (private / 18+)
+- Genovervej, hvordan upvotes burde gemmes
+- Der burde både være "post karma" og "comment karma"
+
+Diagrammer:
+- FIX DIAGRAMMERNE (brug ordentlige pile)
+- Der mangler vist en diagram-type?
+- Fjern join tables fra conceptual
+- Ingen forbindelse mellem users og messages i conceptual
+
+
+Fremgang:
+- ✅ Web app: Setup webserver-delen (Bruger Gin, fulgte den officielle guide - https://go.dev/doc/tutorial/web-service-gin)
+- Security: Tilføj SQL script, der opretter en DB bruger med begrænsede rettigheder
+- Security/functionality: Tilføj Login/Logout. Herunder - JWT? Hashing af PW?
+- Functionality: Definér øvrige end points og implementer queries.
+- Migrator app: Definér MongoDB layout. Find ud af, hvordan det bedst giver mening - JSON filer? Structs? Kig på Mongo lib for Go
