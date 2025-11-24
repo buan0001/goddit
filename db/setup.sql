@@ -225,7 +225,8 @@ CREATE TABLE Comment_votes(
 );
 
 -- TRIGGERS
-DELIMITER //
+
+DELIMITER $$
 
 CREATE TRIGGER after_subscribe
 AFTER INSERT ON Subscriptions
@@ -234,8 +235,7 @@ BEGIN
     UPDATE Sub_goddits
     SET subscribers = subscribers + 1
     WHERE id = NEW.sub_id;
-END//
-
+END $$
 
 CREATE TRIGGER after_unsubscribe
 AFTER DELETE ON Subscriptions
@@ -244,16 +244,14 @@ BEGIN
     UPDATE Sub_goddits
     SET subscribers = subscribers - 1
     WHERE id = OLD.sub_id;
-END//
-
+END $$
 
 CREATE TRIGGER prevent_created_update
 BEFORE UPDATE ON Comments
 FOR EACH ROW
 BEGIN
     SET NEW.created_at = OLD.created_at;
-END//
-
+END $$
 
 CREATE TRIGGER hide_comments_on_user_disable
 AFTER UPDATE ON Users
@@ -264,8 +262,7 @@ BEGIN
         SET removed = TRUE
         WHERE user_id = NEW.id;
     END IF;
-END//
-
+END $$
 
 CREATE TRIGGER hide_comments_on_user_delete
 AFTER DELETE ON Users
@@ -274,7 +271,7 @@ BEGIN
     UPDATE Comments
     SET removed = TRUE
     WHERE user_id = OLD.id;
-END//
+END $$
 
 
 CREATE TRIGGER enforce_message_participation
@@ -292,7 +289,7 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'User is not a participant in the message chain.';
     END IF;
-END//
+END $$
 
 -- Part to ensure archived posts stay unchanged
 
@@ -308,7 +305,7 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot modify comments on an archived post.';
     END IF;
-END//
+END $$
 
 
 CREATE TRIGGER prevent_comment_deletion_on_archived_post
@@ -323,7 +320,7 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot delete comments on an archived post.';
     END IF;
-END//
+END $$
 
 
 CREATE TRIGGER prevent_vote_changes_on_archived_post
@@ -338,7 +335,7 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot modify votes on an archived post.';
     END IF;
-END//
+END $$
 
 
 CREATE TRIGGER prevent_vote_deletion_on_archived_post
@@ -353,7 +350,7 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot delete votes on an archived post.';
     END IF;
-END//
+END $$
 
 
 CREATE TRIGGER prevent_post_changes_on_archived_post
@@ -368,7 +365,7 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot modify an archived post.';
     END IF;
-END//
+END $$
 
 
 CREATE TRIGGER prevent_post_deletion_on_archived_post
@@ -383,7 +380,7 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot delete an archived post.';
     END IF;
-END//
+END $$
 
 
 DELIMITER ;
@@ -391,6 +388,9 @@ DELIMITER ;
 -- EVENTS
 
 -- Since we have slight data duplication by incrementing the subscriber count in 2 places, we do this to ensure daily data consistency
+
+DELIMITER $$
+
 CREATE EVENT update_subscriber_counts
 ON SCHEDULE EVERY 1 DAY
 DO
@@ -399,71 +399,14 @@ BEGIN
     SET subscribers = (
         SELECT COUNT(*) FROM Subscriptions WHERE Subscriptions.sub_id = Sub_goddits.id
     );
-END;
-
+END $$
 
 CREATE EVENT remove_expired_events
 ON SCHEDULE EVERY 1 DAY
 DO
 BEGIN
     DELETE FROM Events WHERE end < NOW();
-END;
-
-
--- CREATE EVENT notify_upcoming_events
--- ON SCHEDULE EVERY 1 DAY
--- DO
--- BEGIN
---     SET @goddit_user_id = (SELECT id FROM Users WHERE username = 'Goddit');
-
---     -- Loop through all upcoming events within the next day
---     DECLARE done INT DEFAULT FALSE;
---     DECLARE event_id INT;
---     DECLARE event_title VARCHAR(255);
-
---     -- Cursor to iterate over upcoming events
---     DECLARE event_cursor CURSOR FOR
---     SELECT id, title
---     FROM Events
---     WHERE start BETWEEN NOW() AND NOW() + INTERVAL 1 DAY;
-
---     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-
---     -- Open the cursor
---     OPEN event_cursor;
-
---     event_loop: LOOP
---         -- Fetch the next event
---         FETCH event_cursor INTO event_id, event_title;
-
---         IF done THEN
---             LEAVE event_loop;
---         END IF;
-
---         -- Create a new message chain for the event
---         INSERT INTO Message_chains () VALUES ();
---         SET @chain_id = LAST_INSERT_ID();
-
---         -- Add participants to the message chain
---         INSERT INTO Message_chain_participants (user_id, chain_id, has_read, read_only)
---         SELECT DISTINCT Event_participations.user_id, @chain_id, FALSE, FALSE
---         FROM Event_participations
---         WHERE Event_participations.event_id = event_id;
-
---         -- Send a message in the thread as "Goddit"
---         INSERT INTO Messages (body, sent, sender_id, chain_id)
---         VALUES (
---             CONCAT('Reminder: The event "', event_title, '" is happening soon!'),
---             NOW(),
---             @goddit_user_id,
---             @chain_id
---         );
---     END LOOP;
-
---     -- Close the cursor
---     CLOSE event_cursor;
--- END;
-
+END $$
 
 CREATE EVENT archive_old_posts
 ON SCHEDULE EVERY 1 WEEK
@@ -471,8 +414,7 @@ DO
 BEGIN
     INSERT INTO Archived_Posts SELECT * FROM Posts WHERE created < NOW() - INTERVAL 2 YEAR;
     DELETE FROM Posts WHERE created < NOW() - INTERVAL 2 YEAR;
-END;
-
+END $$
 
 -- First delete old user activity data, then recalculate the daily activity
 CREATE EVENT delete_expired_user_activity
@@ -481,7 +423,7 @@ DO
 BEGIN
     DELETE FROM User_activity
     WHERE time_visited < NOW() - INTERVAL 1 DAY;
-END;
+END $$
 
 CREATE EVENT update_daily_visitors
 ON SCHEDULE EVERY 30 SECOND
@@ -493,8 +435,9 @@ BEGIN
         FROM User_activity
         WHERE User_activity.sub_id = Sub_goddits.id
     );
-END;
+END $$
 
+DELIMITER ;
 
 -- VIEWS
 

@@ -1,5 +1,3 @@
-# Temp files
 .~*
-
-
+tmp/
 .env
