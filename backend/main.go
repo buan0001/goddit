@@ -1,16 +1,15 @@
 package main
 
 import (
-    "net/http"
+    
 	"log"
 	"database/sql"
 	
 	_ "github.com/go-sql-driver/mysql"
 	"goddit/backend/db"
-	"goddit/backend/service"
-
-    "github.com/gin-gonic/gin"
+	"goddit/backend/api"
 	"github.com/joho/godotenv"
+
 )
 
 
@@ -20,14 +19,13 @@ func main() {
     if err != nil {
         log.Fatal("Error loading .env file")
     }
-
-	database := db.InitDb()
-    defer database.Conn.Close()
-
-	router := gin.Default()
-
-
-    router.Run("localhost:8080")
+	
+	// TODO: Make the active DB change depending on incoming query param
+	database := db.InitDb("sql")
+	// Maybe close connection again? Would have to be method on interface
+	
+	
+	api.InitializeAPI(database)
 }
 
 type Database struct {

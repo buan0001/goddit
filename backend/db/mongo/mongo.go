@@ -12,7 +12,7 @@ type MongoDatabase struct {
 	Conn *mongo.Database
 }
 
-func NewMongoDatabase(collection *mongo.Collection) *MongoDatabase {
+func NewMongoDatabase() *MongoDatabase {
 	client, err := mongo.Connect(nil, options.Client().ApplyURI(os.Getenv("MONGO_URI")))
 	if err != nil {
 		log.Fatalf("Failed to connect to MongoDB: %v", err)
