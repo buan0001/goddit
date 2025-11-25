@@ -7,11 +7,12 @@ import (
 	"os"
 	"context"
 
+	"goddit/backend/models"
 	_ "github.com/go-sql-driver/mysql"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
-
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -20,6 +21,8 @@ func main() {
 }
 
 func NewSQLConnection() *sql.DB {
+	godotenv.Load(".env")
+
 	dsn := os.Getenv("MYSQL_CONN_STR")
 
 	conn, err := sql.Open("mysql", dsn)
