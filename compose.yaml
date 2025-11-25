@@ -12,7 +12,7 @@ services:
   #   depends_on:
   #     db:
   #       condition: service_healthy
-  db:
+  mysql:
     container_name: goddit_db
     image: mysql
     # restart: always
@@ -29,6 +29,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  mongodb:
+    container_name: goddit_mongo
+    image: mongo
+    # restart: always
+    ports:
+      - "27017:27017"
     
 volumes:
   db-data:

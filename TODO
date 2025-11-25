@@ -19,6 +19,6 @@ Diagrammer:
 Fremgang:
 - ✅ Web app: Setup webserver-delen (Bruger Gin, fulgte den officielle guide - https://go.dev/doc/tutorial/web-service-gin)
 - ✅ Security: Tilføj SQL script, der opretter en DB bruger med begrænsede rettigheder
-- Security/functionality: Tilføj Login/Logout. Herunder - JWT? Hashing af PW?
+- ✅ Security/functionality: Tilføj Login/Logout. Herunder - JWT? Hashing af PW? -> Venter me JWT. Bare simpel signup/login
 - Functionality: Definér øvrige end points og implementer queries.
 - Migrator app: Definér MongoDB layout. Find ud af, hvordan det bedst giver mening - JSON filer? Structs? Kig på Mongo lib for Go
