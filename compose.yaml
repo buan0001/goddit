@@ -1,17 +1,20 @@
 services:
-  # backend:
-  #   container_name: app
-  #   build:
-  #     context: ./backend
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     CONN_STR: goddit_app:insecure@tcp(db:3306)/goddit_db
-  #   volumes:
-  #     - ./backend:/app
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
+  backend:
+    container_name: app
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      CONN_STR: goddit_app:insecure@tcp(mysql:3306)/goddit_db
+      # GO111MODULE: "on"
+    # volumes:
+      # - ./backend:/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
   mysql:
     container_name: goddit_db
     image: mysql
@@ -21,20 +24,33 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: insecure
     volumes:
-      - ./db/setup.sql:/docker-entrypoint-initdb.d/1_setup.sql
-      - ./db/initial_data.sql:/docker-entrypoint-initdb.d/2_initial_data.sql
-      - ./db/create_db_user.sql:/docker-entrypoint-initdb.d/3_create_db_user.sql
+      - mysql-data:/var/lib/mysql
+      - ./sql_scripts/setup.sql:/docker-entrypoint-initdb.d/1_setup.sql
+      - ./sql_scripts/initial_data.sql:/docker-entrypoint-initdb.d/2_initial_data.sql
+      - ./sql_scripts/create_db_user.sql:/docker-entrypoint-initdb.d/3_create_db_user.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pinsecure"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - goddit-network
+    
   mongodb:
     container_name: goddit_mongo
     image: mongo
     # restart: always
     ports:
       - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - goddit-network
     
 volumes:
-  db-data:
+  mysql-data:
+  mongo-data:
+
+networks:
+  goddit-network:
+    name: goddit-network

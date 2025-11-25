@@ -1,0 +1,14 @@
+services:
+  migrator:
+    container_name: migrator
+    build:
+      context: .
+    environment:
+      MYSQL_CONN_STR: goddit_app:insecure@tcp(goddit_db:3306)/goddit_db
+      MONGO_CONN_STR: mongodb://goddit_mongo:27017
+    networks:
+      - goddit-network
+
+networks:
+  goddit-network:
+    external: true
