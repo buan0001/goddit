@@ -4,7 +4,7 @@ CREATE DATABASE IF NOT EXISTS goddit_db;
 
 USE goddit_db;
 
-CREATE TABLE Sub_goddits(
+CREATE TABLE sub_goddits(
     id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(63) NOT NULL,
     description VARCHAR(2000),
@@ -15,25 +15,25 @@ CREATE TABLE Sub_goddits(
 );
 
 
-CREATE TABLE User_flairs(
+CREATE TABLE user_flairs(
     id INT NOT NULL AUTO_INCREMENT,
     body VARCHAR(50) NOT NULL,
     sub_id INT NOT NULL,
     PRIMARY KEY(id),
-    FOREIGN KEY(sub_id) REFERENCES Sub_goddits(id) ON DELETE CASCADE,
+    FOREIGN KEY(sub_id) REFERENCES sub_goddits(id) ON DELETE CASCADE,
     INDEX idx_user_flairs_sub_id (sub_id)
 );
 
-CREATE TABLE Post_flairs(
+CREATE TABLE post_flairs(
     id INT NOT NULL AUTO_INCREMENT,
     body VARCHAR(50) NOT NULL,
     sub_id INT NOT NULL,
     PRIMARY KEY(id),
-    FOREIGN KEY(sub_id) REFERENCES Sub_goddits(id) ON DELETE CASCADE,
+    FOREIGN KEY(sub_id) REFERENCES sub_goddits(id) ON DELETE CASCADE,
     INDEX idx_post_flairs_sub_id (sub_id)
 );
 
-CREATE TABLE Users(
+CREATE TABLE users(
     id INT NOT NULL AUTO_INCREMENT,
     username VARCHAR(100) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -47,20 +47,20 @@ CREATE TABLE Users(
     UNIQUE INDEX idx_email (email)
 );
 
-CREATE TABLE User_activity(
+CREATE TABLE user_activity(
     id INT NOT NULL AUTO_INCREMENT,
     user_id INT NOT NULL,
     sub_id INT NOT NULL,
     time_visited TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(sub_id) REFERENCES Sub_goddits(id) ON DELETE CASCADE,
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
+    FOREIGN KEY(sub_id) REFERENCES sub_goddits(id) ON DELETE CASCADE,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
     PRIMARY KEY(id),
     INDEX idx_user_activity_sub_id (sub_id),
     INDEX idx_user_activity_user_id (user_id)
 );
 
 
-CREATE TABLE Posts(
+CREATE TABLE posts(
     id INT NOT NULL AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
     body VARCHAR(8191),
@@ -71,16 +71,16 @@ CREATE TABLE Posts(
     user_id INT,
     sub_id INT NOT NULL,
     PRIMARY KEY(id),
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE SET NULL,
-    FOREIGN KEY(sub_id) REFERENCES Sub_goddits(id) ON DELETE CASCADE,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY(sub_id) REFERENCES sub_goddits(id) ON DELETE CASCADE,
     INDEX idx_posts_sub_id (sub_id),
     INDEX idx_posts_user_id (user_id)
 );
 
 -- Move out of main table for query performance
-CREATE TABLE Archived_Posts LIKE Posts;
+CREATE TABLE archived_posts LIKE posts;
 
-CREATE TABLE Comments(
+CREATE TABLE comments(
     id INT NOT NULL AUTO_INCREMENT,
     upvotes INT DEFAULT 0 NOT NULL,
     downvotes INT DEFAULT 0 NOT NULL,
@@ -91,136 +91,136 @@ CREATE TABLE Comments(
     post_id INT NOT NULL,
     responds_to INT DEFAULT NULL,
     PRIMARY KEY(id),
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE SET NULL,
-    FOREIGN KEY(post_id) REFERENCES Posts(id) ON DELETE CASCADE,
-    FOREIGN KEY(responds_to) REFERENCES Comments(id) ON DELETE SET NULL,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY(responds_to) REFERENCES comments(id) ON DELETE SET NULL,
     INDEX idx_comments_post_id (post_id),
     INDEX idx_comments_responds_to (responds_to)
 );
 
-CREATE TABLE Events(
+CREATE TABLE events(
     id INT NOT NULL AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
     body VARCHAR(1000),
     start DATETIME NOT NULL,
     end DATETIME NOT NULL,
     organisor_id INT,
-    FOREIGN KEY(organisor_id) REFERENCES Users(id) ON DELETE SET NULL,
+    FOREIGN KEY(organisor_id) REFERENCES users(id) ON DELETE SET NULL,
     PRIMARY KEY(id),
     CHECK (start < end)
 );
 
-CREATE TABLE Event_participations(
+CREATE TABLE event_participations(
     event_id INT NOT NULL,
     user_id INT NOT NULL,
     PRIMARY KEY(event_id, user_id),
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
-    FOREIGN KEY(event_id) REFERENCES Events(id) ON DELETE CASCADE
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(event_id) REFERENCES events(id) ON DELETE CASCADE
 );
 
-CREATE TABLE Message_chains(
+CREATE TABLE message_chains(
     id INT NOT NULL AUTO_INCREMENT,
     PRIMARY KEY(id)
 );
 
-CREATE TABLE Message_chain_participants(
+CREATE TABLE message_chain_participants(
     user_id INT NOT NULL,
     chain_id INT NOT NULL,
     has_read BOOLEAN NOT NULL DEFAULT FALSE,
     read_only BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY(user_id, chain_id),
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
-    FOREIGN KEY(chain_id) REFERENCES Message_chains(id) ON DELETE CASCADE
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(chain_id) REFERENCES message_chains(id) ON DELETE CASCADE
 );
 
-CREATE TABLE Messages(
+CREATE TABLE messages(
     id INT NOT NULL AUTO_INCREMENT,
     body VARCHAR(10000),
     sent TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     sender_id INT,
     chain_id INT NOT NULL,
     PRIMARY KEY(id),
-    FOREIGN KEY(sender_id) REFERENCES Users(id) ON DELETE SET NULL,
-    FOREIGN KEY(chain_id) REFERENCES Message_chains(id) ON DELETE CASCADE
+    FOREIGN KEY(sender_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY(chain_id) REFERENCES message_chains(id) ON DELETE CASCADE
 );
 
-CREATE TABLE Purchases(
+CREATE TABLE purchases(
     id INT NOT NULL AUTO_INCREMENT,
     amount_paid FLOAT(7,2) NOT NULL,
     gold_recieved INT NOT NULL,
     user_id INT,
     PRIMARY KEY(id),
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE SET NULL,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
     CHECK (amount_paid > 0 AND gold_recieved > 0)
 );
 
-CREATE TABLE Award_types(
+CREATE TABLE award_types(
     id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(50) NOT NULL UNIQUE,
     PRIMARY KEY(id)
 );
 
-CREATE TABLE Comment_awards(
+CREATE TABLE comment_awards(
     id INT NOT NULL AUTO_INCREMENT,
     user_id INT,
     comment_id INT,
     award_id INT,
     PRIMARY KEY(id),
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
-    FOREIGN KEY(comment_id) REFERENCES Comments(id) ON DELETE CASCADE,
-    FOREIGN KEY(award_id) REFERENCES Award_types(id) ON DELETE CASCADE
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+    FOREIGN KEY(award_id) REFERENCES award_types(id) ON DELETE CASCADE
 );
 
-CREATE TABLE Post_awards(
+CREATE TABLE post_awards(
     id INT NOT NULL AUTO_INCREMENT,
     user_id INT,
     post_id INT,
     award_id INT,
     PRIMARY KEY(id),
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
-    FOREIGN KEY(post_id) REFERENCES Posts(id) ON DELETE CASCADE,
-    FOREIGN KEY(award_id) REFERENCES Award_types(id) ON DELETE CASCADE
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY(award_id) REFERENCES award_types(id) ON DELETE CASCADE
 );
 
-CREATE TABLE Moderators(
+CREATE TABLE moderators(
     user_id INT NOT NULL,
     sub_id INT NOT NULL,
     role ENUM('moderator', 'owner') DEFAULT 'moderator',
     PRIMARY KEY(user_id, sub_id),
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
-    FOREIGN KEY(sub_id) REFERENCES Sub_goddits(id) ON DELETE CASCADE
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(sub_id) REFERENCES sub_goddits(id) ON DELETE CASCADE
 );
 
-CREATE TABLE Subscriptions(
+CREATE TABLE subscriptions(
     user_id INT NOT NULL,
     sub_id INT NOT NULL,
     subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     user_flair_id INT,
     PRIMARY KEY(user_id, sub_id),
-    FOREIGN KEY(user_flair_id) REFERENCES User_flairs(id) ON DELETE CASCADE,
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
-    FOREIGN KEY(sub_id) REFERENCES Sub_goddits(id) ON DELETE CASCADE,
+    FOREIGN KEY(user_flair_id) REFERENCES user_flairs(id) ON DELETE CASCADE,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(sub_id) REFERENCES sub_goddits(id) ON DELETE CASCADE,
     INDEX idx_subscriptions_user_id (user_id),
     INDEX idx_subscriptions_sub_id (sub_id)
 );
 
-CREATE TABLE Post_votes(
+CREATE TABLE post_votes(
     is_upvote BOOLEAN NOT NULL,
     user_id INT NOT NULL,
     post_id INT NOT NULL,
     PRIMARY KEY(user_id, post_id),
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
-    FOREIGN KEY(post_id) REFERENCES Posts(id) ON DELETE CASCADE,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE,
     INDEX idx_post_votes_user_id (user_id)
 );
 
-CREATE TABLE Comment_votes(
+CREATE TABLE comment_votes(
     positive BOOLEAN NOT NULL,
     user_id INT NOT NULL,
     comment_id INT NOT NULL,
     PRIMARY KEY(user_id, comment_id),
-    FOREIGN KEY(user_id) REFERENCES Users(id) ON DELETE CASCADE,
-    FOREIGN KEY(comment_id) REFERENCES Comments(id) ON DELETE CASCADE,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(comment_id) REFERENCES comments(id) ON DELETE CASCADE,
     INDEX idx_comment_votes_user_id (user_id)
 );
 
@@ -229,59 +229,59 @@ CREATE TABLE Comment_votes(
 DELIMITER $$
 
 CREATE TRIGGER after_subscribe
-AFTER INSERT ON Subscriptions
+AFTER INSERT ON subscriptions
 FOR EACH ROW
 BEGIN
-    UPDATE Sub_goddits
+    UPDATE sub_goddits
     SET subscribers = subscribers + 1
     WHERE id = NEW.sub_id;
 END $$
 
 CREATE TRIGGER after_unsubscribe
-AFTER DELETE ON Subscriptions
+AFTER DELETE ON subscriptions
 FOR EACH ROW
 BEGIN
-    UPDATE Sub_goddits
+    UPDATE sub_goddits
     SET subscribers = subscribers - 1
     WHERE id = OLD.sub_id;
 END $$
 
 CREATE TRIGGER prevent_created_update
-BEFORE UPDATE ON Comments
+BEFORE UPDATE ON comments
 FOR EACH ROW
 BEGIN
     SET NEW.created_at = OLD.created_at;
 END $$
 
 CREATE TRIGGER hide_comments_on_user_disable
-AFTER UPDATE ON Users
+AFTER UPDATE ON users
 FOR EACH ROW
 BEGIN
     IF NEW.disabled = TRUE THEN
-        UPDATE Comments
+        UPDATE comments
         SET removed = TRUE
         WHERE user_id = NEW.id;
     END IF;
 END $$
 
 CREATE TRIGGER hide_comments_on_user_delete
-AFTER DELETE ON Users
+AFTER DELETE ON users
 FOR EACH ROW
 BEGIN
-    UPDATE Comments
+    UPDATE comments
     SET removed = TRUE
     WHERE user_id = OLD.id;
 END $$
 
 
 CREATE TRIGGER enforce_message_participation
-BEFORE INSERT ON Messages
+BEFORE INSERT ON messages
 FOR EACH ROW
 BEGIN
     -- Check if the sender is part of the message chain
     IF NOT EXISTS (
         SELECT 1
-        FROM Message_chain_participants
+        FROM message_chain_participants
         WHERE user_id = NEW.sender_id
           AND chain_id = NEW.chain_id
     ) THEN
@@ -294,13 +294,13 @@ END $$
 -- Part to ensure archived posts stay unchanged
 
 CREATE TRIGGER prevent_comment_changes_on_archived_post
-BEFORE UPDATE ON Comments
+BEFORE UPDATE ON comments
 FOR EACH ROW
 BEGIN
     IF EXISTS (
         SELECT 1
-        FROM Archived_Posts
-        WHERE Archived_Posts.id = NEW.post_id
+        FROM archived_posts
+        WHERE archived_posts.id = NEW.post_id
     ) THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot modify comments on an archived post.';
@@ -309,13 +309,13 @@ END $$
 
 
 CREATE TRIGGER prevent_comment_deletion_on_archived_post
-BEFORE DELETE ON Comments
+BEFORE DELETE ON comments
 FOR EACH ROW
 BEGIN
     IF EXISTS (
         SELECT 1
-        FROM Archived_Posts
-        WHERE Archived_Posts.id = OLD.post_id
+        FROM archived_posts
+        WHERE archived_posts.id = OLD.post_id
     ) THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot delete comments on an archived post.';
@@ -324,13 +324,13 @@ END $$
 
 
 CREATE TRIGGER prevent_vote_changes_on_archived_post
-BEFORE UPDATE ON Post_votes
+BEFORE UPDATE ON post_votes
 FOR EACH ROW
 BEGIN
     IF EXISTS (
         SELECT 1
-        FROM Archived_Posts
-        WHERE Archived_Posts.id = NEW.post_id
+        FROM archived_posts
+        WHERE archived_posts.id = NEW.post_id
     ) THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot modify votes on an archived post.';
@@ -339,13 +339,13 @@ END $$
 
 
 CREATE TRIGGER prevent_vote_deletion_on_archived_post
-BEFORE DELETE ON Post_votes
+BEFORE DELETE ON post_votes
 FOR EACH ROW
 BEGIN
     IF EXISTS (
         SELECT 1
-        FROM Archived_Posts
-        WHERE Archived_Posts.id = OLD.post_id
+        FROM archived_posts
+        WHERE archived_posts.id = OLD.post_id
     ) THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot delete votes on an archived post.';
@@ -354,13 +354,13 @@ END $$
 
 
 CREATE TRIGGER prevent_post_changes_on_archived_post
-BEFORE UPDATE ON Posts
+BEFORE UPDATE ON posts
 FOR EACH ROW
 BEGIN
     IF EXISTS (
         SELECT 1
-        FROM Archived_Posts
-        WHERE Archived_Posts.id = NEW.id
+        FROM archived_posts
+        WHERE archived_posts.id = NEW.id
     ) THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot modify an archived post.';
@@ -369,13 +369,13 @@ END $$
 
 
 CREATE TRIGGER prevent_post_deletion_on_archived_post
-BEFORE DELETE ON Posts
+BEFORE DELETE ON posts
 FOR EACH ROW
 BEGIN
     IF EXISTS (
         SELECT 1
-        FROM Archived_Posts
-        WHERE Archived_Posts.id = OLD.id
+        FROM archived_posts
+        WHERE archived_posts.id = OLD.id
     ) THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Cannot delete an archived post.';
@@ -395,9 +395,9 @@ CREATE EVENT update_subscriber_counts
 ON SCHEDULE EVERY 1 DAY
 DO
 BEGIN
-    UPDATE Sub_goddits
+    UPDATE sub_goddits
     SET subscribers = (
-        SELECT COUNT(*) FROM Subscriptions WHERE Subscriptions.sub_id = Sub_goddits.id
+        SELECT COUNT(*) FROM subscriptions WHERE subscriptions.sub_id = sub_goddits.id
     );
 END $$
 
@@ -405,15 +405,15 @@ CREATE EVENT remove_expired_events
 ON SCHEDULE EVERY 1 DAY
 DO
 BEGIN
-    DELETE FROM Events WHERE end < NOW();
+    DELETE FROM events WHERE end < NOW();
 END $$
 
 CREATE EVENT archive_old_posts
 ON SCHEDULE EVERY 1 WEEK
 DO
 BEGIN
-    INSERT INTO Archived_Posts SELECT * FROM Posts WHERE created < NOW() - INTERVAL 2 YEAR;
-    DELETE FROM Posts WHERE created < NOW() - INTERVAL 2 YEAR;
+    INSERT INTO archived_posts SELECT * FROM posts WHERE created < NOW() - INTERVAL 2 YEAR;
+    DELETE FROM posts WHERE created < NOW() - INTERVAL 2 YEAR;
 END $$
 
 -- First delete old user activity data, then recalculate the daily activity
@@ -421,7 +421,7 @@ CREATE EVENT delete_expired_user_activity
 ON SCHEDULE EVERY 30 SECOND
 DO
 BEGIN
-    DELETE FROM User_activity
+    DELETE FROM user_activity
     WHERE time_visited < NOW() - INTERVAL 1 DAY;
 END $$
 
@@ -429,11 +429,11 @@ CREATE EVENT update_daily_visitors
 ON SCHEDULE EVERY 30 SECOND
 DO
 BEGIN
-    UPDATE Sub_goddits
+    UPDATE sub_goddits
     SET daily_users = (
         SELECT COUNT(DISTINCT user_id)
-        FROM User_activity
-        WHERE User_activity.sub_id = Sub_goddits.id
+        FROM user_activity
+        WHERE user_activity.sub_id = sub_goddits.id
     );
 END $$
 
@@ -449,7 +449,7 @@ SELECT
     daily_users,
     subscribers,
     created
-FROM Sub_goddits
+FROM sub_goddits
 ORDER BY daily_users DESC;
 
 
@@ -460,9 +460,9 @@ SELECT
     COUNT(DISTINCT p.id) AS total_posts,
     COUNT(DISTINCT c.id) AS total_comments,
     u.karma
-FROM Users u
-LEFT JOIN Posts p ON u.id = p.user_id
-LEFT JOIN Comments c ON u.id = c.user_id
+FROM users u
+LEFT JOIN posts p ON u.id = p.user_id
+LEFT JOIN comments c ON u.id = c.user_id
 GROUP BY u.id, u.username, u.karma
 ORDER BY total_posts DESC, total_comments DESC;
 
@@ -475,9 +475,9 @@ SELECT
     e.end AS event_end,
     u.id AS user_id,
     u.username AS participant_name
-FROM Events e
-JOIN Event_participations ep ON e.id = ep.event_id
-JOIN Users u ON ep.user_id = u.id
+FROM events e
+JOIN event_participations ep ON e.id = ep.event_id
+JOIN users u ON ep.user_id = u.id
 ORDER BY e.start, e.title;
 
 
@@ -490,9 +490,9 @@ SELECT
     COUNT(c.id) AS total_comments,
     p.created AS post_created,
     u.username AS author
-FROM Posts p
-LEFT JOIN Comments c ON p.id = c.post_id
-LEFT JOIN Users u ON p.user_id = u.id
+FROM posts p
+LEFT JOIN comments c ON p.id = c.post_id
+LEFT JOIN users u ON p.user_id = u.id
 GROUP BY p.id, p.title, p.upvotes, p.downvotes, p.created, u.username
 ORDER BY p.upvotes DESC, total_comments DESC;
 
@@ -504,9 +504,9 @@ SELECT
     m.user_id,
     u.username AS moderator_name,
     m.role AS moderator_role
-FROM Moderators m
-JOIN Sub_goddits sg ON m.sub_id = sg.id
-JOIN Users u ON m.user_id = u.id
+FROM moderators m
+JOIN sub_goddits sg ON m.sub_id = sg.id
+JOIN users u ON m.user_id = u.id
 ORDER BY sg.name, m.role;
 
 
@@ -515,8 +515,8 @@ SELECT
     u.id AS user_id,
     u.username,
     COUNT(ep.event_id) AS total_events
-FROM Users u
-LEFT JOIN Event_participations ep ON u.id = ep.user_id
+FROM users u
+LEFT JOIN event_participations ep ON u.id = ep.user_id
 GROUP BY u.id, u.username
 ORDER BY total_events DESC;
 
@@ -527,4 +527,4 @@ SELECT
     email,
     role,
     created
-FROM Users;
+FROM users;

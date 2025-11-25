@@ -1,6 +1,6 @@
 USE goddit_db;
 
-INSERT INTO Users (username, email, password, role, created)
+INSERT INTO users (username, email, password, role, created)
 VALUES
 ('Goddit', 'admin@goddit.com', 'securepassword', 'admin', NOW()),
 ('john_doe', 'john.doe@example.com', 'password123', 'user', NOW() - INTERVAL 10 DAY),
@@ -23,7 +23,7 @@ VALUES
 ('paul', 'paul@example.com', 'password123', 'user', NOW() - INTERVAL 13 DAY),
 ('quinn', 'quinn@example.com', 'password123', 'user', NOW() - INTERVAL 2 DAY);
 
-INSERT INTO Sub_goddits (name, description, subscribers, daily_users, created)
+INSERT INTO sub_goddits (name, description, subscribers, daily_users, created)
 VALUES
 ('TechTalk', 'A place to discuss technology and gadgets.', 500, 120, NOW() - INTERVAL 30 DAY),
 ('GamingHub', 'All about video games and gaming culture.', 800, 200, NOW() - INTERVAL 25 DAY),
@@ -47,7 +47,7 @@ VALUES
 ('SportsTalk', 'All about sports and athletes.', 600, 150, NOW() - INTERVAL 4 DAY);
 
 
-INSERT INTO Posts (title, body, upvotes, downvotes, created, user_id, sub_id)
+INSERT INTO posts (title, body, upvotes, downvotes, created, user_id, sub_id)
 VALUES
 ('Best programming languages in 2025', 'What are your thoughts?', 120, 10, NOW() - INTERVAL 1 DAY, 2, 7),
 ('Top 10 video games of the year', 'Here are my picks...', 200, 15, NOW() - INTERVAL 2 DAY, 3, 2),
@@ -70,7 +70,7 @@ VALUES
 ('Political debates in 2025', 'What are your thoughts?', 180, 15, NOW() - INTERVAL 19 DAY, 20, 19),
 ('Top sports moments of the year', 'Here are some highlights...', 150, 12, NOW() - INTERVAL 20 DAY, 2, 20);
 
-INSERT INTO Comments (body, upvotes, downvotes, created_at, user_id, post_id, responds_to)
+INSERT INTO comments (body, upvotes, downvotes, created_at, user_id, post_id, responds_to)
 VALUES
 ('I completely agree!', 50, 2, NOW() - INTERVAL 1 HOUR, 3, 1, NULL),
 ('Great list, thanks for sharing!', 40, 1, NOW() - INTERVAL 2 HOUR, 4, 2, NULL),
@@ -94,7 +94,7 @@ VALUES
 ('Thanks for sharing!', 60, 3, NOW() - INTERVAL 20 HOUR, 3, 20, NULL);
 
 
-INSERT INTO Events (title, body, start, end, organisor_id)
+INSERT INTO events (title, body, start, end, organisor_id)
 VALUES
 ('Tech Conference 2025', 'A conference about the latest in tech.', NOW() + INTERVAL 2 DAY, NOW() + INTERVAL 3 DAY, 2),
 ('Gaming Expo', 'Showcasing the latest games and consoles.', NOW() + INTERVAL 5 DAY, NOW() + INTERVAL 6 DAY, 3),
@@ -118,7 +118,7 @@ VALUES
 ('Sports Day', 'Participate in fun sports activities.', NOW() + INTERVAL 11 DAY, NOW() + INTERVAL 11 DAY + INTERVAL 6 HOUR, 2);
 
 
-INSERT INTO Event_participations (event_id, user_id)
+INSERT INTO event_participations (event_id, user_id)
 VALUES
 (1, 3), (1, 4), (1, 5), (1, 6), (1, 7),
 (2, 8), (2, 9), (2, 10), (2, 11), (2, 12),
@@ -130,12 +130,12 @@ VALUES
 (8, 19), (8, 20), (8, 2), (8, 3), (8, 4);
 
 
-INSERT INTO Message_chains ()
+INSERT INTO message_chains ()
 VALUES (), (), (), (), (), (), (), (), (), (),
        (), (), (), (), (), (), (), (), (), ();
 
 
-INSERT INTO Message_chain_participants (user_id, chain_id, has_read, read_only)
+INSERT INTO message_chain_participants (user_id, chain_id, has_read, read_only)
 VALUES
 (3, 1, FALSE, FALSE), (4, 1, FALSE, FALSE), (5, 1, FALSE, FALSE),
 (6, 2, FALSE, FALSE), (7, 2, FALSE, FALSE), (8, 2, FALSE, FALSE),
@@ -145,7 +145,7 @@ VALUES
 (18, 6, FALSE, FALSE), (19, 6, FALSE, FALSE), (20, 6, FALSE, FALSE),
 (2, 7, FALSE, FALSE), (3, 7, FALSE, FALSE);
 
-INSERT INTO Messages (body, sent, sender_id, chain_id)
+INSERT INTO messages (body, sent, sender_id, chain_id)
 VALUES
 ('Welcome to the event discussion!', NOW() - INTERVAL 1 DAY, 3, 1),
 ('Looking forward to this event!', NOW() - INTERVAL 1 DAY, 4, 1),
@@ -162,7 +162,7 @@ VALUES
 ('What’s the agenda for the event?', NOW() - INTERVAL 7 DAY, 2, 7),
 ('I hope to learn a lot from this event.', NOW() - INTERVAL 7 DAY, 3, 7);
 
-INSERT INTO Subscriptions (user_id, sub_id, subscribed_at, user_flair_id)
+INSERT INTO subscriptions (user_id, sub_id, subscribed_at, user_flair_id)
 VALUES
 (2, 1, NOW() - INTERVAL 10 DAY, NULL),
 (3, 1, NOW() - INTERVAL 8 DAY, NULL),
@@ -186,7 +186,7 @@ VALUES
 (2, 10, NOW() - INTERVAL 12 DAY, NULL);
 
 
-INSERT INTO Post_votes (is_upvote, user_id, post_id)
+INSERT INTO post_votes (is_upvote, user_id, post_id)
 VALUES
 (TRUE, 2, 1), (TRUE, 3, 1), (FALSE, 4, 1), (TRUE, 5, 1), (TRUE, 6, 1),
 (TRUE, 7, 2), (FALSE, 8, 2), (TRUE, 9, 2), (TRUE, 10, 2), (FALSE, 11, 2),
@@ -200,7 +200,7 @@ VALUES
 (TRUE, 9, 10), (TRUE, 10, 10), (FALSE, 11, 10), (TRUE, 12, 10), (TRUE, 13, 10);
 
 
-INSERT INTO Comment_votes (positive, user_id, comment_id)
+INSERT INTO comment_votes (positive, user_id, comment_id)
 VALUES
 (TRUE, 2, 1), (TRUE, 3, 1), (FALSE, 4, 1), (TRUE, 5, 1), (TRUE, 6, 1),
 (TRUE, 7, 2), (FALSE, 8, 2), (TRUE, 9, 2), (TRUE, 10, 2), (FALSE, 11, 2),
@@ -219,7 +219,7 @@ VALUES
 (TRUE, 15, 15), (TRUE, 16, 15), (FALSE, 17, 15), (TRUE, 18, 15), (TRUE, 19, 15);
 
 
-INSERT INTO Moderators (user_id, sub_id, role)
+INSERT INTO moderators (user_id, sub_id, role)
 VALUES
 (2, 1, 'owner'),
 (3, 1, 'moderator'),
@@ -242,7 +242,7 @@ VALUES
 (20, 10, 'owner'),
 (2, 10, 'moderator');
 
-INSERT INTO Award_types (name)
+INSERT INTO award_types (name)
 VALUES
 ('Gold'),
 ('Silver'),
@@ -265,7 +265,7 @@ VALUES
 ('Visionary'),
 ('Legendary');
 
-INSERT INTO Purchases (amount_paid, gold_recieved, user_id)
+INSERT INTO purchases (amount_paid, gold_recieved, user_id)
 VALUES
 (9.99, 100, 2),
 (19.99, 250, 3),
@@ -289,7 +289,7 @@ VALUES
 (14.99, 150, 2);
 
 
-INSERT INTO Archived_Posts (id, title, body, upvotes, downvotes, created, user_id, sub_id)
+INSERT INTO archived_posts (id, title, body, upvotes, downvotes, created, user_id, sub_id)
 VALUES
 (1, 'Best programming languages in 2025', 'What are your thoughts?', 120, 10, NOW() - INTERVAL 365 DAY, 2, 7),
 (2, 'Top 10 video games of the year', 'Here are my picks...', 200, 15, NOW() - INTERVAL 400 DAY, 3, 2),
@@ -303,13 +303,13 @@ VALUES
 (10, 'Best books of the year', 'Here are my top picks...', 70, 6, NOW() - INTERVAL 440 DAY, 11, 10);
 
 
-INSERT INTO Comment_awards (user_id, comment_id, award_id)
+INSERT INTO comment_awards (user_id, comment_id, award_id)
 VALUES
 (2, 1, 1), (3, 2, 2), (4, 3, 3), (5, 4, 4), (6, 5, 5),
 (7, 6, 6), (8, 7, 7), (9, 8, 8), (10, 9, 9), (11, 10, 10);
 
 
-INSERT INTO Post_flairs (body, sub_id)
+INSERT INTO post_flairs (body, sub_id)
 VALUES
 ('Discussion', 1),
 ('Question', 2),
@@ -323,13 +323,13 @@ VALUES
 ('Event', 10);
 
 
-INSERT INTO Post_awards (user_id, post_id, award_id)
+INSERT INTO post_awards (user_id, post_id, award_id)
 VALUES
 (2, 1, 1), (3, 2, 2), (4, 3, 3), (5, 4, 4), (6, 5, 5),
 (7, 6, 6), (8, 7, 7), (9, 8, 8), (10, 9, 9), (11, 10, 10);
 
 
-INSERT INTO User_activity (user_id, sub_id, time_visited)
+INSERT INTO user_activity (user_id, sub_id, time_visited)
 VALUES
 (2, 1, NOW() - INTERVAL 1 HOUR),
 (3, 2, NOW() - INTERVAL 2 HOUR),
@@ -343,7 +343,7 @@ VALUES
 (11, 10, NOW() - INTERVAL 10 HOUR);
 
 
-INSERT INTO User_flairs (body, sub_id)
+INSERT INTO user_flairs (body, sub_id)
 VALUES
 ('Tech Enthusiast', 1),
 ('Gamer', 2),
