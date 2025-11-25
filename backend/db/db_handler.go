@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"goddit/backend/db/mongo"
+	// "goddit/backend/db/mongo"
 	"goddit/backend/db/mysql"
 	// "goddit/backend/db/neo4j"
 	"goddit/backend/models"
@@ -19,7 +19,8 @@ type Database interface {
 type UserQueries interface {
 	GetAllUsers() ([]models.User, error)
 	GetUserByID(id int) (*models.User, error)
-	CreateUser(user *models.User) error
+	CreateUser(user *models.User) (int, error)
+	GetUserByUsername(username string) (*models.User, error)
 }
 
 // PostQueries defines methods for post-related database operations
@@ -34,8 +35,8 @@ func InitDb(dbType string) Database {
 		fmt.Println("Initializing SQL Database")
 		return mysql.NewSQLDatabase()
 	} else if dbType == "mongodb" {
-		fmt.Println("Initializing NoSQL Database")
-		return mongo.NewMongoDatabase()
+		fmt.Println("Mongodb not yet implemented")
+		// return mongo.NewMongoDatabase()
 	} else if dbType == "neo4j" {
 		fmt.Println("Graph DB not yet implemented")
 		// return neo4j.NewNeo4jDatabase()

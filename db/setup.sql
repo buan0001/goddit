@@ -37,7 +37,7 @@ CREATE TABLE Users(
     id INT NOT NULL AUTO_INCREMENT,
     username VARCHAR(100) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(40) NOT NULL,
+    password VARCHAR(60) NOT NULL, -- 60 to match bcrypt hash length
     disabled BOOLEAN DEFAULT FALSE,
     role ENUM('user', 'admin') DEFAULT 'user',
     karma INT DEFAULT 0 NOT NULL,
