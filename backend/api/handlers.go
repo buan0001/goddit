@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 	"fmt"
 	"goddit/backend/db"
 	"goddit/backend/service"
@@ -50,7 +49,7 @@ func LoginHandler(db db.Database) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Login successful", "user_id": strconv.Itoa(user.ID)})
+		c.JSON(http.StatusOK, gin.H{"message": "Login successful", "user_id": user.ID})
 	}
 }
 

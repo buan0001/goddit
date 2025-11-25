@@ -14,6 +14,7 @@ type SQLDatabase struct {
 
 func NewSQLDatabase() *SQLDatabase {
 	dsn := os.Getenv("CONN_STR")
+	fmt.Println("Connecting to MySQL with DSN:", dsn)
 
 	conn, err := sql.Open("mysql", dsn)
 	if err != nil {

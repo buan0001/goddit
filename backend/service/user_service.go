@@ -25,7 +25,7 @@ func (s *UserService) GetUserByID(id int) (*models.User, error) {
     return s.repo.GetUserByID(id)
 }
 
-func (s *UserService) CreateUser(username, email, password string) (int, error) {
+func (s *UserService) CreateUser(username, email, password string) (interface{}, error) {
     hashedPassword, err := HashPassword(password)
     fmt.Println("Hashed password:", hashedPassword)
     if err != nil {

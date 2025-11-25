@@ -2,7 +2,7 @@
 CREATE USER 'goddit_app'@'%' IDENTIFIED BY 'insecure';
 
 -- Grant limited privileges to the user
-GRANT SELECT, INSERT, UPDATE, DELETE ON goddit_db.* TO 'goddit_app'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON goddit.* TO 'goddit_app'@'%';
 
 -- Flush privileges to apply changes
 FLUSH PRIVILEGES;

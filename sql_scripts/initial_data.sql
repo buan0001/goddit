@@ -1,4 +1,4 @@
-USE goddit_db;
+USE goddit;
 
 INSERT INTO users (username, email, password, role, created)
 VALUES

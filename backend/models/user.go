@@ -10,6 +10,7 @@ type UserRoles struct {
 }
 
 type User struct {
+	ID        any       `json:"id" bson:"id"`
 	Username  string    `json:"username" bson:"username"`
 	Email     string    `json:"email" bson:"email"`
 	Password  string    `json:"password" bson:"password"`

@@ -16,8 +16,12 @@ import (
 )
 
 func main() {
-	NewSQLConnection()
-	NewMongoConnection()
+	sqlConn := NewSQLConnection()
+	mongoConn := NewMongoConnection()
+	defer sqlConn.Close()
+	defer mongoConn.Disconnect(context.TODO())
+
+	migrateSQLToMongo(sqlConn, mongoConn)
 }
 
 func NewSQLConnection() *sql.DB {
@@ -67,4 +71,40 @@ func NewMongoConnection() *mongo.Client {
 	fmt.Println("Pinged your deployment. You successfully connected to MongoDB!")
 
 	return client
+}
+
+func migrateSQLToMongo(sqlDB *sql.DB, mongoClient *mongo.Client) {
+	// Combine users with posts, comments, events, subscriptions and messages
+	rows, err := sqlDB.Query(`
+	SELECT * FROM users
+	JOIN posts ON users.id = posts.user_id
+	JOIN comments ON users.id = comments.user_id
+	JOIN events ON users.id = events.organisor_id
+	JOIN subscriptions ON users.id = subscriptions.user_id
+	JOIN messages ON users.id = messages.sender_id
+	LIMIT 1;
+	`)
+	if err != nil {
+		log.Fatalf("Failed to query SQL database: %v", err)
+	}
+	defer rows.Close()
+	
+	// Prepare MongoDB collection
+	collection := mongoClient.Database("goddit").Collection("users")
+	for rows.Next() {
+		var user models.User
+		if err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.Password); err != nil {
+			log.Fatalf("Failed to scan row: %v", err)
+		}
+
+		// Insert user into MongoDB
+		_, err := collection.InsertOne(context.TODO(), user)
+		if err != nil {
+			log.Fatalf("Failed to insert user into MongoDB: %v", err)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatalf("Row iteration error: %v", err)
+	}
+
 }

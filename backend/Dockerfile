@@ -1,19 +1,19 @@
-FROM golang:1.25
+# FROM golang:1.25
 
-WORKDIR /app
+# WORKDIR /app
 
-# pre-copy/cache go.mod for pre-downloading dependencies and only redownloading them in subsequent builds if they change
-COPY go.mod go.sum ./
-RUN go mod download
+# # pre-copy/cache go.mod for pre-downloading dependencies and only redownloading them in subsequent builds if they change
+# COPY go.mod go.sum ./
+# RUN go mod download
 
-# Copy the rest of the application source code
-COPY . .
+# # Copy the rest of the application source code
+# COPY . .
 
-# Build the Go application into a binary
-RUN go build -o bin .
+# # Build the Go application into a binary
+# RUN go build -o bin .
 
-# Use the built binary as the entry point
-CMD ["/app/bin"]
+# # Use the built binary as the entry point
+# CMD ["/app/bin"]
 
 # FROM golang:1.25
 
@@ -33,12 +33,12 @@ CMD ["/app/bin"]
 
 # ENTRYPOINT CompileDaemon -build="go build -o /build/app" -command="/build/app"
 
-# FROM golang:1.25
+FROM golang:1.25
 
-# WORKDIR /app
+WORKDIR /app
 
-# RUN go install github.com/air-verse/air@latest
+RUN go install github.com/air-verse/air@latest
 
-# COPY . .
+COPY . .
 
-# ENTRYPOINT ["air"]
+ENTRYPOINT ["air"]
